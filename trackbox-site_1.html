@@ -1,0 +1,2301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrackBox™ — Prepared Athletes Perform Differently</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300&family=Barlow:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #040406;
+  --s1: #0a0a0e;
+  --s2: #111116;
+  --s3: #1a1a22;
+  --white: #f8f8ff;
+  --g1: #8888a0;
+  --g2: #3a3a4a;
+  --g3: #1e1e28;
+  --blue: #00D4FF;
+  --pink: #FF006E;
+  --blue-a: rgba(0,212,255,0.12);
+  --pink-a: rgba(255,0,110,0.10);
+  --blue-b: rgba(0,212,255,0.06);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-cond: 'Barlow Condensed', sans-serif;
+  --font-body: 'Barlow', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+::selection { background: var(--blue); color: #000; }
+
+/* ============ SCROLLBAR ============ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--g2); border-radius: 2px; }
+
+/* ============ NAV ============ */
+#nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 48px;
+  transition: background 0.4s, padding 0.4s, backdrop-filter 0.4s;
+}
+#nav.scrolled {
+  background: rgba(4,4,6,0.88);
+  backdrop-filter: blur(16px);
+  padding: 14px 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: var(--white);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-logo span {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--blue);
+  letter-spacing: 1px;
+  border: 1px solid var(--blue);
+  padding: 2px 5px;
+  opacity: 0.8;
+}
+.nav-links {
+  display: flex; gap: 36px; list-style: none;
+}
+.nav-links a {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--g1);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--white); }
+.nav-cta {
+  font-family: var(--font-cond);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--blue);
+  border: none; cursor: pointer;
+  padding: 10px 22px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+.nav-cta:hover { background: var(--white); }
+
+/* ============ CANVAS WRAPPER ============ */
+#canvas-wrapper {
+  position: fixed; top:0; left:0;
+  width:100%; height:100%;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+#three-canvas {
+  position: absolute; top:0; left:0;
+  width:100%; height:100%;
+  display:block;
+}
+
+/* ============ HERO CONTENT ============ */
+#hero-content {
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.1s;
+  width: 100%;
+  pointer-events: none;
+}
+#hero-words {
+  display: flex;
+  gap: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.hw {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 7vw, 80px);
+  letter-spacing: 8px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.01s, transform 0.01s;
+  padding: 0 8px;
+}
+.hw.blue { color: var(--blue); }
+.hw.white { color: var(--white); }
+.hw.pink { color: var(--pink); }
+
+#hero-tagline {
+  font-family: var(--font-cond);
+  font-size: clamp(14px, 1.8vw, 20px);
+  letter-spacing: 4px;
+  color: var(--g1);
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.01s;
+  margin-bottom: 36px;
+}
+#hero-cta {
+  display: flex; gap: 16px; justify-content: center;
+  opacity: 0;
+  transition: opacity 0.01s;
+  pointer-events: auto;
+}
+.btn-primary {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 14px 32px;
+  background: var(--blue);
+  color: #000;
+  text-decoration: none;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.btn-primary:hover { background: var(--white); }
+.btn-ghost {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 13px 32px;
+  border: 1px solid var(--g2);
+  color: var(--g1);
+  text-decoration: none;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  transition: border-color 0.2s, color 0.2s;
+  cursor: pointer;
+}
+.btn-ghost:hover { border-color: var(--white); color: var(--white); }
+
+/* Scroll hint */
+#scroll-hint {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+#scroll-hint .sh-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--g1);
+}
+#scroll-hint .sh-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--g1), transparent);
+  animation: scrollPulse 1.8s ease-in-out infinite;
+}
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.3; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.1); }
+}
+
+/* ============ HERO SPACER ============ */
+#hero-spacer {
+  height: 650vh;
+  pointer-events: none;
+}
+
+/* ============ SECTIONS ============ */
+.section {
+  position: relative;
+  z-index: 20;
+  padding: 120px 0;
+}
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--blue);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-label::before {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 1px;
+  background: var(--blue);
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 6vw, 80px);
+  letter-spacing: 4px;
+  line-height: 0.9;
+  margin-bottom: 24px;
+}
+.section-sub {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--g1);
+  line-height: 1.7;
+  max-width: 560px;
+}
+
+/* ============ BRAND STATEMENT ============ */
+#brand-statement {
+  padding: 160px 0;
+  background: var(--s1);
+  overflow: hidden;
+}
+.bs-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.bs-left {}
+.bs-headline {
+  font-family: var(--font-display);
+  font-size: clamp(52px, 7vw, 96px);
+  line-height: 0.88;
+  letter-spacing: 3px;
+  margin-bottom: 32px;
+}
+.bs-headline .accent { color: var(--blue); }
+.bs-headline .accent-p { color: var(--pink); }
+.bs-body {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--g1);
+  margin-bottom: 40px;
+  max-width: 480px;
+}
+.bs-stats {
+  display: flex;
+  gap: 40px;
+}
+.bs-stat {}
+.bs-stat-num {
+  font-family: var(--font-display);
+  font-size: 44px;
+  letter-spacing: 2px;
+  color: var(--white);
+  line-height: 1;
+}
+.bs-stat-num span { color: var(--blue); }
+.bs-stat-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--g1);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.bs-right {
+  position: relative;
+}
+.bs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--g2);
+  border: 1px solid var(--g2);
+}
+.bs-grid-item {
+  background: var(--s1);
+  padding: 36px 28px;
+  transition: background 0.3s;
+}
+.bs-grid-item:hover { background: var(--s2); }
+.bs-grid-icon {
+  font-family: var(--font-display);
+  font-size: 36px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.bs-grid-icon.blue { color: var(--blue); }
+.bs-grid-icon.pink { color: var(--pink); }
+.bs-grid-icon.white { color: var(--white); }
+.bs-grid-icon.dim { color: var(--g1); }
+.bs-grid-text {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--g1);
+  line-height: 1.5;
+}
+
+/* ============ BOXES SECTION ============ */
+#boxes {
+  padding: 140px 0;
+  background: var(--bg);
+}
+.boxes-header {
+  text-align: center;
+  margin-bottom: 80px;
+}
+.boxes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--g2);
+  border: 1px solid var(--g2);
+}
+.box-card {
+  background: var(--s1);
+  padding: 48px 36px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s;
+  cursor: pointer;
+}
+.box-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background 0.3s;
+}
+.box-card:hover { background: var(--s2); }
+.box-card.featured { background: var(--s2); }
+.box-card.featured::before { background: var(--blue); }
+.box-card:nth-child(1):hover::before { background: var(--blue); }
+.box-card:nth-child(3):hover::before { background: var(--pink); }
+
+.box-tier {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 20px;
+}
+.box-tier.pink { color: var(--pink); }
+.box-name {
+  font-family: var(--font-display);
+  font-size: 36px;
+  letter-spacing: 3px;
+  margin-bottom: 8px;
+}
+.box-price-wrap {
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--g2);
+}
+.box-price-sale {
+  font-family: var(--font-display);
+  font-size: 52px;
+  letter-spacing: 2px;
+  color: var(--white);
+  line-height: 1;
+}
+.box-price-sale .price-dollar { font-size: 24px; vertical-align: top; margin-top: 8px; display: inline-block; }
+.box-price-regular {
+  font-family: var(--font-cond);
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: var(--g2);
+  text-decoration: line-through;
+  margin-top: 4px;
+}
+.box-sub-price {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--blue);
+  letter-spacing: 1px;
+  margin-top: 8px;
+}
+.box-features {
+  list-style: none;
+  margin-bottom: 36px;
+}
+.box-features li {
+  font-family: var(--font-cond);
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  color: var(--g1);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--g3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.box-features li::before {
+  content: '';
+  width: 6px;
+  height: 1px;
+  background: var(--blue);
+  flex-shrink: 0;
+}
+.box-cta {
+  display: block;
+  width: 100%;
+  font-family: var(--font-cond);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 14px 20px;
+  text-align: center;
+  background: var(--blue-a);
+  border: 1px solid rgba(0,212,255,0.2);
+  color: var(--blue);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+.box-cta:hover, .box-card.featured .box-cta {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #000;
+}
+.box-badge {
+  position: absolute;
+  top: 20px; right: 20px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: var(--blue);
+  color: #000;
+  padding: 4px 8px;
+  font-weight: 700;
+}
+
+/* ============ SESSION PACKS ============ */
+#session-packs {
+  padding: 140px 0;
+  background: var(--s1);
+}
+.sp-header {
+  max-width: 1280px;
+  margin: 0 auto 64px;
+  padding: 0 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.sp-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--g2);
+  border: 1px solid var(--g2);
+}
+.sp-tab {
+  font-family: var(--font-cond);
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 12px 22px;
+  background: var(--s1);
+  color: var(--g1);
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, color 0.2s;
+}
+.sp-tab:hover { background: var(--s2); color: var(--white); }
+.sp-tab.active { background: var(--blue); color: #000; }
+.sp-content-area {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+.sp-panel {
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+.sp-panel.active { display: grid; grid-template-columns: 1fr 1.6fr; gap: 80px; align-items: start; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+.sp-panel-left {}
+.sp-pack-name {
+  font-family: var(--font-display);
+  font-size: 80px;
+  letter-spacing: 6px;
+  line-height: 0.9;
+  margin-bottom: 16px;
+}
+.sp-pack-name.blue { color: var(--blue); }
+.sp-pack-name.pink { color: var(--pink); }
+.sp-pack-name.white { color: var(--white); }
+.sp-pack-name.gray { color: var(--g1); }
+.sp-timing {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--blue);
+  border: 1px solid rgba(0,212,255,0.3);
+  padding: 6px 14px;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+.sp-pack-desc {
+  font-size: 15px;
+  color: var(--g1);
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+.sp-key {
+  font-family: var(--font-cond);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--g2);
+  margin-bottom: 16px;
+}
+.sp-goal {
+  font-family: var(--font-cond);
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: var(--white);
+  font-style: italic;
+  padding-left: 16px;
+  border-left: 2px solid var(--blue);
+}
+.sp-goal.pink-line { border-left-color: var(--pink); }
+
+.sp-panel-right {}
+.sp-items-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: var(--g2);
+  border: 1px solid var(--g2);
+}
+.sp-item {
+  background: var(--s2);
+  padding: 24px 20px;
+  transition: background 0.2s;
+}
+.sp-item:hover { background: var(--s1); }
+.sp-item-name {
+  font-family: var(--font-cond);
+  font-size: 15px;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+.sp-item-detail {
+  font-size: 12px;
+  color: var(--g1);
+  line-height: 1.5;
+}
+.sp-item-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-top: 10px;
+}
+.sp-item-tag.pink { color: var(--pink); }
+
+/* ============ GOBAG ============ */
+#gobag {
+  padding: 100px 0;
+  background: var(--bg);
+}
+.gobag-inner {
+  max-width: 1280px; margin: 0 auto; padding: 0 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.gobag-label-row {
+  display: flex; gap: 16px; margin-bottom: 40px;
+}
+.gobag-phase {
+  font-family: var(--font-cond);
+  font-size: 11px;
+  letter-spacing: 3px;
+  padding: 6px 14px;
+  border: 1px solid var(--g2);
+  color: var(--g1);
+  text-transform: uppercase;
+  cursor: default;
+}
+.gobag-phase.pre { border-color: var(--blue); color: var(--blue); }
+.gobag-phase.during { border-color: var(--white); color: var(--white); }
+.gobag-phase.post { border-color: var(--pink); color: var(--pink); }
+.gobag-options {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.gobag-option {
+  padding: 16px 20px;
+  background: var(--s1);
+  border: 1px solid var(--g3);
+  display: flex; justify-content: space-between; align-items: center;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+.gobag-option:hover { border-color: var(--g2); }
+.gobag-option-name {
+  font-family: var(--font-cond);
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.gobag-option-macro {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--blue);
+}
+.gobag-phase-title {
+  font-family: var(--font-display);
+  font-size: 56px;
+  letter-spacing: 4px;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.gobag-phase-desc {
+  font-size: 15px;
+  color: var(--g1);
+  line-height: 1.7;
+  max-width: 420px;
+}
+
+/* ============ PREP SYSTEM ============ */
+#prep-system {
+  padding: 140px 0;
+  background: var(--s1);
+  overflow: hidden;
+}
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 80px;
+  background: var(--g2);
+  border: 1px solid var(--g2);
+  gap: 1px;
+}
+.pillar {
+  background: var(--s1);
+  padding: 56px 36px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s;
+}
+.pillar:hover { background: var(--s2); }
+.pillar-num {
+  font-family: var(--font-display);
+  font-size: 120px;
+  letter-spacing: -2px;
+  line-height: 1;
+  opacity: 0.04;
+  position: absolute;
+  top: 20px; right: 20px;
+  color: var(--white);
+  user-select: none;
+}
+.pillar-icon {
+  width: 40px; height: 40px;
+  border: 1px solid var(--blue);
+  margin-bottom: 24px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pillar-icon svg { width: 18px; height: 18px; stroke: var(--blue); fill: none; stroke-width: 1.5; }
+.pillar-title {
+  font-family: var(--font-display);
+  font-size: 42px;
+  letter-spacing: 4px;
+  margin-bottom: 16px;
+}
+.pillar-title.blue { color: var(--blue); }
+.pillar-title.pink { color: var(--pink); }
+.pillar-title.white { color: var(--white); }
+.pillar-title.dim { color: var(--g1); }
+.pillar-desc {
+  font-size: 13px;
+  color: var(--g1);
+  line-height: 1.7;
+}
+
+/* ============ PVM ============ */
+#pvm {
+  padding: 140px 0;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+#pvm::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(255,0,110,0.06) 0%, transparent 60%),
+              radial-gradient(ellipse at 20% 50%, rgba(0,212,255,0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+.pvm-inner {
+  max-width: 1280px; margin: 0 auto; padding: 0 48px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.pvm-label { margin-bottom: 16px; }
+.pvm-headline {
+  font-family: var(--font-display);
+  font-size: clamp(52px, 7vw, 90px);
+  letter-spacing: 4px;
+  line-height: 0.9;
+  margin-bottom: 32px;
+}
+.pvm-headline .pink { color: var(--pink); }
+.pvm-headline .blue { color: var(--blue); }
+.pvm-body {
+  font-size: 16px;
+  color: var(--g1);
+  line-height: 1.75;
+  margin-bottom: 40px;
+  max-width: 500px;
+}
+.pvm-services {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--g2);
+  border: 1px solid var(--g2);
+  margin-bottom: 40px;
+}
+.pvm-service {
+  background: var(--s1);
+  padding: 20px 22px;
+}
+.pvm-service-title {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.pvm-service-desc {
+  font-size: 12px;
+  color: var(--g1);
+}
+.pvm-right {
+  position: relative;
+}
+.pvm-visual {
+  background: var(--s1);
+  border: 1px solid var(--g2);
+  padding: 60px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.pvm-visual::before {
+  content: '';
+  position: absolute;
+  top: -40px; left: 50%;
+  transform: translateX(-50%);
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(255,0,110,0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.pvm-visual-headline {
+  font-family: var(--font-display);
+  font-size: 60px;
+  letter-spacing: 6px;
+  line-height: 1;
+  color: var(--pink);
+  margin-bottom: 8px;
+}
+.pvm-visual-sub {
+  font-family: var(--font-cond);
+  font-size: 18px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--g1);
+  margin-bottom: 36px;
+}
+.pvm-stat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-top: 36px;
+}
+.pvm-stat { text-align: center; }
+.pvm-stat-num {
+  font-family: var(--font-display);
+  font-size: 36px;
+  letter-spacing: 2px;
+  color: var(--white);
+}
+.pvm-stat-num span { color: var(--pink); }
+.pvm-stat-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--g1);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.pvm-divider {
+  width: 1px;
+  background: var(--g2);
+}
+
+/* ============ TEAM SALES ============ */
+#team-sales {
+  padding: 120px 0;
+  background: var(--s1);
+}
+.team-inner {
+  max-width: 1280px; margin: 0 auto; padding: 0 48px;
+}
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--g2);
+  border: 1px solid var(--g2);
+  margin-top: 60px;
+}
+.team-card {
+  background: var(--s1);
+  padding: 40px 32px;
+  transition: background 0.2s;
+}
+.team-card:hover { background: var(--s2); }
+.team-card-num {
+  font-family: var(--font-display);
+  font-size: 52px;
+  letter-spacing: 3px;
+  color: var(--blue);
+  line-height: 1;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+.team-card-title {
+  font-family: var(--font-cond);
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.team-card-desc {
+  font-size: 13px;
+  color: var(--g1);
+  line-height: 1.6;
+}
+
+/* ============ FINAL CTA ============ */
+#final-cta {
+  padding: 180px 0;
+  background: var(--bg);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+#final-cta::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, rgba(0,212,255,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+#final-cta::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(255,0,110,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+.cta-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: var(--blue);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  position: relative; z-index: 1;
+}
+.cta-headline {
+  font-family: var(--font-display);
+  font-size: clamp(52px, 8vw, 110px);
+  letter-spacing: 4px;
+  line-height: 0.88;
+  margin-bottom: 16px;
+  position: relative; z-index: 1;
+}
+.cta-sub {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 80px);
+  letter-spacing: 6px;
+  color: var(--blue);
+  line-height: 0.88;
+  margin-bottom: 60px;
+  position: relative; z-index: 1;
+}
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative; z-index: 1;
+}
+.btn-cta-primary {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 18px 40px;
+  background: var(--blue);
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  transition: background 0.2s;
+}
+.btn-cta-primary:hover { background: var(--white); }
+.btn-cta-ghost {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 17px 40px;
+  background: transparent;
+  color: var(--g1);
+  border: 1px solid var(--g2);
+  text-decoration: none;
+  cursor: pointer;
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-cta-ghost:hover { border-color: var(--white); color: var(--white); }
+.btn-cta-pink {
+  font-family: var(--font-cond);
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 18px 40px;
+  background: var(--pink);
+  color: var(--white);
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  transition: background 0.2s;
+}
+.btn-cta-pink:hover { background: #ff3388; }
+.cta-tagline {
+  font-family: var(--font-cond);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--g2);
+  text-transform: uppercase;
+  margin-top: 40px;
+  position: relative; z-index: 1;
+}
+.cta-tagline span { color: var(--g1); }
+
+/* ============ FOOTER ============ */
+footer {
+  background: var(--s1);
+  border-top: 1px solid var(--g2);
+  padding: 60px 48px 40px;
+}
+.footer-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 60px;
+  margin-bottom: 48px;
+}
+.footer-brand-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+}
+.footer-brand-tagline {
+  font-family: var(--font-cond);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--g1);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.footer-brand-email {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--blue);
+  letter-spacing: 1px;
+}
+.footer-col-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--g2);
+  margin-bottom: 20px;
+}
+.footer-links { list-style: none; }
+.footer-links li { margin-bottom: 12px; }
+.footer-links a {
+  font-family: var(--font-cond);
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  color: var(--g1);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--white); }
+.footer-bottom {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid var(--g3);
+}
+.footer-copy {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--g2);
+  letter-spacing: 1px;
+}
+.footer-legal {
+  display: flex; gap: 28px;
+}
+.footer-legal a {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--g2);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-legal a:hover { color: var(--g1); }
+
+/* ============ MARQUEE ============ */
+.marquee-wrap {
+  overflow: hidden;
+  background: var(--s2);
+  border-top: 1px solid var(--g2);
+  border-bottom: 1px solid var(--g2);
+  padding: 14px 0;
+}
+.marquee-track {
+  display: flex;
+  animation: marquee 24s linear infinite;
+  white-space: nowrap;
+}
+.marquee-item {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--g2);
+  padding: 0 32px;
+}
+.marquee-item span { color: var(--blue); margin-right: 32px; }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ============ HORIZONTAL RULE ============ */
+.section-rule {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--g2) 30%, var(--g2) 70%, transparent);
+  margin: 0;
+}
+
+/* ============ GLOW LINES ============ */
+.glow-line-blue {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--blue), transparent);
+  opacity: 0.4;
+}
+.glow-line-pink {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--pink), transparent);
+  opacity: 0.4;
+}
+
+/* ============ ANIMATE IN ============ */
+.animate-in {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 900px) {
+  #nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  .container, .bs-inner, .gobag-inner, .pvm-inner, .footer-inner { padding: 0 24px; }
+  .boxes-grid { grid-template-columns: 1fr; }
+  .bs-inner { grid-template-columns: 1fr; gap: 40px; }
+  .gobag-inner { grid-template-columns: 1fr; }
+  .pillars-grid { grid-template-columns: 1fr 1fr; }
+  .pvm-inner { grid-template-columns: 1fr; }
+  .team-grid { grid-template-columns: 1fr; }
+  .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .sp-panel.active { grid-template-columns: 1fr; gap: 40px; }
+  .sp-header { flex-direction: column; gap: 24px; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<nav id="nav">
+  <a href="#" class="nav-logo">TRACKBOX <span>TM</span></a>
+  <ul class="nav-links">
+    <li><a href="#boxes">Shop</a></li>
+    <li><a href="#session-packs">Session Packs</a></li>
+    <li><a href="#pvm">Pole Vault Miami</a></li>
+    <li><a href="#team-sales">Teams</a></li>
+    <li><a href="https://www.trackboxtm.com/about-1" target="_blank">About</a></li>
+  </ul>
+  <a href="https://www.trackboxtm.com/category/trackbox-membership-boxes" target="_blank" class="nav-cta">Build Your Box</a>
+</nav>
+
+<!-- ===== CANVAS WRAPPER ===== -->
+<div id="canvas-wrapper">
+  <canvas id="three-canvas"></canvas>
+
+  <!-- Scene text overlays -->
+  <div id="hero-content">
+    <div id="hero-words">
+      <span class="hw blue" id="word-fuel">FUEL.</span>
+      <span class="hw white" id="word-hydrate">HYDRATE.</span>
+      <span class="hw pink" id="word-recover">RECOVER.</span>
+      <span class="hw white" id="word-compete">COMPETE.</span>
+    </div>
+    <p id="hero-tagline">Prepared Athletes Perform Differently.</p>
+    <div id="hero-cta">
+      <a href="#boxes" class="btn-primary">Build Your TrackBox</a>
+      <a href="#session-packs" class="btn-ghost">Session Packs</a>
+    </div>
+  </div>
+
+  <div id="scroll-hint">
+    <span class="sh-label">SCROLL</span>
+    <div class="sh-line"></div>
+  </div>
+</div>
+
+<!-- ===== HERO SPACER ===== -->
+<div id="hero-spacer"></div>
+
+<!-- ===== MARQUEE ===== -->
+<div class="marquee-wrap">
+  <div class="marquee-track" id="marquee-track"></div>
+</div>
+
+<!-- ===== BRAND STATEMENT ===== -->
+<section id="brand-statement" class="section">
+  <div class="bs-inner">
+    <div class="bs-left animate-in">
+      <div class="section-label">What Is TrackBox</div>
+      <h2 class="bs-headline">
+        NOT A BOX.<br>
+        A <span class="accent">PREPARATION</span><br>
+        <span class="accent-p">SYSTEM.</span>
+      </h2>
+      <p class="bs-body">
+        TrackBox was built to solve a real problem: athletes showing up to meets missing tape, hydration, chalk, or recovery essentials. We ship everything directly to you, curated specifically for track &amp; field. Not generic. Not random. Built for your event, your training phase, your competition schedule.
+      </p>
+      <div class="bs-stats">
+        <div class="bs-stat">
+          <div class="bs-stat-num">3<span>+</span></div>
+          <div class="bs-stat-label">Box Tiers</div>
+        </div>
+        <div class="bs-stat">
+          <div class="bs-stat-num">9<span>+</span></div>
+          <div class="bs-stat-label">Event Squads</div>
+        </div>
+        <div class="bs-stat">
+          <div class="bs-stat-num">5<span>×</span></div>
+          <div class="bs-stat-label">Session Packs</div>
+        </div>
+      </div>
+    </div>
+    <div class="bs-right animate-in">
+      <div class="bs-grid">
+        <div class="bs-grid-item">
+          <div class="bs-grid-icon blue">FUEL</div>
+          <div class="bs-grid-text">Pre-session and competition nutrition engineered for output</div>
+        </div>
+        <div class="bs-grid-item">
+          <div class="bs-grid-icon white">HYDRATE</div>
+          <div class="bs-grid-text">Electrolyte systems to maintain performance under pressure</div>
+        </div>
+        <div class="bs-grid-item">
+          <div class="bs-grid-icon pink">RECOVER</div>
+          <div class="bs-grid-text">Post-session tools and nutrition to rebuild faster</div>
+        </div>
+        <div class="bs-grid-item">
+          <div class="bs-grid-icon dim">COMPETE</div>
+          <div class="bs-grid-text">Chalk, tape, spike kits — everything you need on meet day</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-rule"></div>
+
+<!-- ===== BOXES ===== -->
+<section id="boxes" class="section">
+  <div class="container">
+    <div class="boxes-header animate-in">
+      <div class="section-label">Choose Your TrackBox</div>
+      <h2 class="section-title">YOUR BOX.<br>YOUR BUILD.</h2>
+      <p class="section-sub">Every box is customized by event squad, chalk preference, and GO-BAG selection. Your training day is unique. Your box should be too.</p>
+    </div>
+
+    <div class="boxes-grid animate-in">
+
+      <!-- ESSENTIALS -->
+      <div class="box-card">
+        <div class="box-tier">Entry Level</div>
+        <div class="box-name">ESSENTIALS</div>
+        <div class="box-price-wrap">
+          <div class="box-price-sale"><span class="price-dollar">$</span>45</div>
+          <div class="box-price-regular">Regular $55.00</div>
+          <div class="box-sub-price">$42.75/mo — Subscribe &amp; Save $25/yr</div>
+        </div>
+        <ul class="box-features">
+          <li>Core training day essentials</li>
+          <li>Chalk of your choice</li>
+          <li>PRE + DURING + POST GO-BAGs</li>
+          <li>Event Squad customization</li>
+          <li>TrackBox branded apparel</li>
+          <li>Free box chance on first sub</li>
+        </ul>
+        <a href="https://www.trackboxtm.com/product-page/ceramic-flower-vase" target="_blank" class="box-cta">Start With Essentials</a>
+      </div>
+
+      <!-- PERFORMANCE + RECOVERY -->
+      <div class="box-card featured">
+        <div class="box-badge">MOST POPULAR</div>
+        <div class="box-tier">Performance</div>
+        <div class="box-name">PERFORMANCE<br>+ RECOVERY</div>
+        <div class="box-price-wrap">
+          <div class="box-price-sale"><span class="price-dollar">$</span>72</div>
+          <div class="box-price-regular">Regular $85.00</div>
+          <div class="box-sub-price">$68.40/mo — Subscribe &amp; Save $43/yr</div>
+        </div>
+        <ul class="box-features">
+          <li>Everything in Essentials</li>
+          <li>Premium recovery tool included</li>
+          <li>Recovery snacks + protein</li>
+          <li>Event Squad customization</li>
+          <li>Elevated gear selection</li>
+          <li>Session pack alignment</li>
+        </ul>
+        <a href="https://www.trackboxtm.com/product-page/silver-box" target="_blank" class="box-cta">Build Performance Box</a>
+      </div>
+
+      <!-- PREMIUM -->
+      <div class="box-card">
+        <div class="box-tier pink">Premium</div>
+        <div class="box-name">PREMIUM<br>TRACKBOX</div>
+        <div class="box-price-wrap">
+          <div class="box-price-sale" style="color: var(--pink)"><span class="price-dollar">$</span>153</div>
+          <div class="box-price-regular">Regular $170.00</div>
+          <div class="box-sub-price" style="color: var(--pink)">$145.35/mo — Subscribe &amp; Save $90/yr</div>
+        </div>
+        <ul class="box-features">
+          <li>Everything in Performance</li>
+          <li>Exclusive premium gear</li>
+          <li>Premium recovery tools</li>
+          <li>Full program access</li>
+          <li>Elite apparel included</li>
+          <li>Full competition system</li>
+        </ul>
+        <a href="https://www.trackboxtm.com/product-page/gold-box-sub" target="_blank" class="box-cta" style="border-color: rgba(255,0,110,0.3); color: var(--pink); background: var(--pink-a);">Go Premium</a>
+      </div>
+
+    </div>
+
+    <!-- Event Squads -->
+    <div style="margin-top: 40px; padding: 28px 32px; background: var(--s1); border: 1px solid var(--g2);" class="animate-in">
+      <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 3px; color: var(--g2); text-transform: uppercase; margin-bottom: 16px;">Available Event Squads</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <span id="squad-sprints" class="squad-chip active">Sprints</span>
+        <span id="squad-distance" class="squad-chip">Distance</span>
+        <span id="squad-mid" class="squad-chip">Mid-Distance</span>
+        <span id="squad-pv" class="squad-chip">Pole Vault</span>
+        <span id="squad-hj" class="squad-chip">High Jump</span>
+        <span id="squad-lj" class="squad-chip">Long Jump</span>
+        <span id="squad-tj" class="squad-chip">Triple Jump</span>
+        <span id="squad-throws" class="squad-chip">Throws</span>
+        <span id="squad-multis" class="squad-chip">Multis</span>
+      </div>
+    </div>
+    <style>
+      .squad-chip {
+        font-family: var(--font-cond);
+        font-size: 12px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 7px 14px;
+        border: 1px solid var(--g2);
+        color: var(--g1);
+        cursor: pointer;
+        transition: border-color 0.2s, color 0.2s, background 0.2s;
+        user-select: none;
+      }
+      .squad-chip:hover { border-color: var(--blue); color: var(--blue); }
+      .squad-chip.active { border-color: var(--blue); color: var(--blue); background: var(--blue-a); }
+    </style>
+  </div>
+</section>
+
+<div class="section-rule"></div>
+
+<!-- ===== SESSION PACKS ===== -->
+<section id="session-packs" class="section" style="padding-top:140px;">
+  <div class="sp-header">
+    <div>
+      <div class="section-label">Session Packs</div>
+      <h2 class="section-title animate-in">THE PERFORMANCE<br>OPERATING SYSTEM.</h2>
+    </div>
+    <div class="sp-tabs" id="sp-tabs">
+      <button class="sp-tab active" data-pack="pre">PRE</button>
+      <button class="sp-tab" data-pack="during">DURING</button>
+      <button class="sp-tab" data-pack="post">POST</button>
+      <button class="sp-tab" data-pack="recovery">RECOVERY</button>
+      <button class="sp-tab" data-pack="compete">COMPETE</button>
+    </div>
+  </div>
+
+  <div class="sp-content-area">
+
+    <!-- PRE -->
+    <div class="sp-panel active" id="pack-pre">
+      <div class="sp-panel-left">
+        <div class="sp-pack-name blue">PRE</div>
+        <div class="sp-timing">60–90 MIN BEFORE</div>
+        <p class="sp-pack-desc">The activation window. What you load before a session determines your ceiling. The PRE pack primes your glycogen stores, activates your nervous system, and gets your body into competition readiness before the gun fires.</p>
+        <div class="sp-key">Session Goal</div>
+        <div class="sp-goal">"Show up prepared. Never show up empty."</div>
+      </div>
+      <div class="sp-panel-right">
+        <div class="sp-items-grid">
+          <div class="sp-item">
+            <div class="sp-item-name">Honey Stinger Waffles</div>
+            <div class="sp-item-detail">Fast-acting carbohydrate source. Organic honey + tapioca. Clean energy with zero crash.</div>
+            <div class="sp-item-tag">CARBS / ENERGY</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Kodiak Granola Bar</div>
+            <div class="sp-item-detail">Sustained release carbs + protein base. Whole grain oats + honey. Longer burn for training sessions.</div>
+            <div class="sp-item-tag">PROTEIN / SUSTAINED</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Nature Valley Oat Bar</div>
+            <div class="sp-item-detail">Lightweight whole grain carb loader. Easy on digestion, ready in 30 minutes.</div>
+            <div class="sp-item-tag">CARBS / LIGHT</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Event-Specific Chalk</div>
+            <div class="sp-item-detail">Chalk block, liquid chalk, or powdered — your choice. Pre-session grip activation.</div>
+            <div class="sp-item-tag">GRIP / PREP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DURING -->
+    <div class="sp-panel" id="pack-during">
+      <div class="sp-panel-left">
+        <div class="sp-pack-name white">DURING</div>
+        <div class="sp-timing">ACTIVE SESSION</div>
+        <p class="sp-pack-desc">Sustain the output. The DURING pack focuses on staying fueled mid-session without overloading digestion. Quick-absorb carbohydrates to maintain blood sugar and performance across all warm-ups, events, and between attempts.</p>
+        <div class="sp-key">Session Goal</div>
+        <div class="sp-goal">"Maintain, don't fade."</div>
+      </div>
+      <div class="sp-panel-right">
+        <div class="sp-items-grid">
+          <div class="sp-item">
+            <div class="sp-item-name">Rice Krispy Treat</div>
+            <div class="sp-item-detail">Simple carbs, fast absorption. The classic mid-meet fuel. Light, easy, effective.</div>
+            <div class="sp-item-tag">FAST CARBS</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Welch's Fruit Snacks</div>
+            <div class="sp-item-detail">Natural sugar spike for between events or during multi-hour sessions. Easy carry.</div>
+            <div class="sp-item-tag">QUICK FUEL</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Hydration Pack</div>
+            <div class="sp-item-detail">Electrolyte supplement (box tier dependent). Replenish sodium, potassium, and magnesium lost in sweat.</div>
+            <div class="sp-item-tag">ELECTROLYTES</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Tape Roll</div>
+            <div class="sp-item-detail">Mid-session grip and support. Never get caught without it at a meet.</div>
+            <div class="sp-item-tag">PHYSICAL PREP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST -->
+    <div class="sp-panel" id="pack-post">
+      <div class="sp-panel-left">
+        <div class="sp-pack-name pink">POST</div>
+        <div class="sp-timing">0–45 MIN AFTER</div>
+        <p class="sp-pack-desc">The anabolic window. What you consume in the 45 minutes after training determines your adaptation. The POST pack closes the gap between effort and recovery — protein synthesis begins here.</p>
+        <div class="sp-key">Session Goal</div>
+        <div class="sp-goal">"Earn the adaptation. Don't waste the window."</div>
+      </div>
+      <div class="sp-panel-right">
+        <div class="sp-items-grid">
+          <div class="sp-item">
+            <div class="sp-item-name">Kodiak Protein Bar</div>
+            <div class="sp-item-detail">Whole grain + 14g protein. Post-session muscle protein synthesis initiator. Clean macros.</div>
+            <div class="sp-item-tag">14G PROTEIN</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Quest Protein Bar</div>
+            <div class="sp-item-detail">21g protein, low sugar, high fiber. Macro-dense recovery bar for serious athletes.</div>
+            <div class="sp-item-tag">21G PROTEIN</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">RXBAR</div>
+            <div class="sp-item-detail">12g egg white protein. Minimal ingredients. No BS. Real food recovery fuel.</div>
+            <div class="sp-item-tag">12G PROTEIN / CLEAN</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Recovery Support</div>
+            <div class="sp-item-detail">Tier-dependent recovery tools. Body work items, compression support, or recovery aids.</div>
+            <div class="sp-item-tag">RECOVERY TOOLS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECOVERY -->
+    <div class="sp-panel" id="pack-recovery">
+      <div class="sp-panel-left">
+        <div class="sp-pack-name gray">RECOVERY</div>
+        <div class="sp-timing">REST DAY / REBUILD</div>
+        <p class="sp-pack-desc">Adaptation happens at rest. The RECOVERY pack extends your off-day protocol — tools, nutrition, and support items for the days between sessions when your body rebuilds stronger than before.</p>
+        <div class="sp-key">Session Goal</div>
+        <div class="sp-goal">"Rebuild harder. Come back better."</div>
+      </div>
+      <div class="sp-panel-right">
+        <div class="sp-items-grid">
+          <div class="sp-item">
+            <div class="sp-item-name">Premium Recovery Tool</div>
+            <div class="sp-item-detail">Box-tier dependent. Includes massage, mobility, compression, or contrast therapy tools.</div>
+            <div class="sp-item-tag">PREMIUM TIER</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Recovery Snacks</div>
+            <div class="sp-item-detail">Anti-inflammatory and protein-forward nutrition for systemic rebuild between training days.</div>
+            <div class="sp-item-tag">NUTRITION</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Mobility Support</div>
+            <div class="sp-item-detail">Elastic bands, muscle tape, or joint support items based on your event squad profile.</div>
+            <div class="sp-item-tag">MOVEMENT</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Hydration Reset</div>
+            <div class="sp-item-detail">Full electrolyte reload. Replenish mineral stores depleted during training blocks.</div>
+            <div class="sp-item-tag">HYDRATION</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPETE -->
+    <div class="sp-panel" id="pack-compete">
+      <div class="sp-panel-left">
+        <div class="sp-pack-name blue">COMPETE</div>
+        <div class="sp-timing">MEET DAY</div>
+        <p class="sp-pack-desc">This is what it all leads to. The COMPETE pack is your complete meet-day system — everything you need from warm-up to the podium. Spike replacements, chalk, hydration, fuel, and the mental edge of knowing you're prepared.</p>
+        <div class="sp-key">Session Goal</div>
+        <div class="sp-goal" style="border-left-color: var(--pink)">"Never miss a meet because you forgot something."</div>
+      </div>
+      <div class="sp-panel-right">
+        <div class="sp-items-grid">
+          <div class="sp-item">
+            <div class="sp-item-name">Spike Replacement Kit</div>
+            <div class="sp-item-detail">Replacement spikes and wrench. The most overlooked item on meet day. It's in the box.</div>
+            <div class="sp-item-tag pink">CRITICAL GEAR</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Athletic Tape</div>
+            <div class="sp-item-detail">Pre-tape, athletic tape, or kinesiology tape — event squad dependent. Meet-ready support.</div>
+            <div class="sp-item-tag pink">PHYSICAL PREP</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Full Fuel Stack</div>
+            <div class="sp-item-detail">PRE + DURING nutrition loaded and ready. Compete without thinking about food logistics.</div>
+            <div class="sp-item-tag">FUEL SYSTEM</div>
+          </div>
+          <div class="sp-item">
+            <div class="sp-item-name">Competition Chalk</div>
+            <div class="sp-item-detail">Your chalk format, meet-ready. Liquid chalk, block, or powder — always in the bag.</div>
+            <div class="sp-item-tag">GRIP</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-rule"></div>
+
+<!-- ===== GO-BAG BREAKDOWN ===== -->
+<section id="gobag" class="section">
+  <div class="gobag-inner">
+    <div class="animate-in">
+      <div class="section-label">Inside the GO-BAG</div>
+      <h2 class="gobag-phase-title">THE<br>GO-BAG<br>SYSTEM</h2>
+      <p class="gobag-phase-desc">Every box ships with a customized GO-BAG: a set of snacks matched to your session phase. You choose what goes inside at checkout. Real food. Real fuel. For real athletes.</p>
+      <div class="gobag-label-row" style="margin-top: 32px;">
+        <div class="gobag-phase pre">PRE</div>
+        <div class="gobag-phase during">DURING</div>
+        <div class="gobag-phase post">POST</div>
+      </div>
+    </div>
+    <div class="animate-in">
+      <div style="margin-bottom: 20px;">
+        <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 3px; color: var(--blue); margin-bottom: 12px; text-transform: uppercase;">PRE — You Choose:</div>
+        <div class="gobag-options">
+          <div class="gobag-option"><span class="gobag-option-name">Honey Stinger Waffles</span><span class="gobag-option-macro">38G CARBS</span></div>
+          <div class="gobag-option"><span class="gobag-option-name">Kodiak Granola Bar</span><span class="gobag-option-macro">25G CARBS / 8G PROTEIN</span></div>
+          <div class="gobag-option"><span class="gobag-option-name">Nature Valley Oat Bar</span><span class="gobag-option-macro">29G CARBS</span></div>
+        </div>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 3px; color: var(--white); margin-bottom: 12px; text-transform: uppercase;">DURING — You Choose:</div>
+        <div class="gobag-options">
+          <div class="gobag-option"><span class="gobag-option-name">Rice Krispy Treat</span><span class="gobag-option-macro">33G CARBS</span></div>
+          <div class="gobag-option"><span class="gobag-option-name">Welch's Fruit Snacks</span><span class="gobag-option-macro">22G CARBS</span></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 3px; color: var(--pink); margin-bottom: 12px; text-transform: uppercase;">POST — You Choose:</div>
+        <div class="gobag-options">
+          <div class="gobag-option"><span class="gobag-option-name">Kodiak Protein Bar</span><span class="gobag-option-macro">14G PROTEIN</span></div>
+          <div class="gobag-option"><span class="gobag-option-name">Quest Protein Bar</span><span class="gobag-option-macro">21G PROTEIN</span></div>
+          <div class="gobag-option"><span class="gobag-option-name">RXBAR</span><span class="gobag-option-macro">12G PROTEIN / CLEAN</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-rule"></div>
+
+<!-- ===== PREP SYSTEM ===== -->
+<section id="prep-system" class="section">
+  <div class="container">
+    <div class="animate-in">
+      <div class="section-label">Athlete Preparation System</div>
+      <h2 class="section-title">FOUR PILLARS.<br>ONE SYSTEM.</h2>
+    </div>
+    <div class="pillars-grid animate-in">
+      <div class="pillar">
+        <div class="pillar-num">01</div>
+        <div class="pillar-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="pillar-title blue">FUEL</div>
+        <p class="pillar-desc">Pre-session and competition nutrition. Carbohydrate loading strategies, fast-absorb energy, and timed supplementation to peak at the right moment.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">02</div>
+        <div class="pillar-icon" style="border-color: rgba(255,255,255,0.3)">
+          <svg viewBox="0 0 24 24" style="stroke: rgba(255,255,255,0.8)"><path d="M12 22c-5.523 0-10-4.477-10-10S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="pillar-title white">HYDRATE</div>
+        <p class="pillar-desc">Electrolyte systems built for the demands of track & field. Sodium, potassium, and magnesium protocols matched to your training phase.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">03</div>
+        <div class="pillar-icon" style="border-color: rgba(255,0,110,0.5)">
+          <svg viewBox="0 0 24 24" style="stroke: var(--pink)"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <div class="pillar-title pink">RECOVER</div>
+        <p class="pillar-desc">Post-session tools, protein nutrition, and soft tissue recovery items that accelerate adaptation between training days. Rebuild stronger.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">04</div>
+        <div class="pillar-icon" style="border-color: rgba(136,136,160,0.4)">
+          <svg viewBox="0 0 24 24" style="stroke: var(--g1)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div class="pillar-title dim">COMPETE</div>
+        <p class="pillar-desc">Meet-day readiness. Spike kits, chalk, tape, fuel stack, and competitive essentials. Show up to every competition prepared, not scrambling.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PVM ===== -->
+<section id="pvm" class="section">
+  <div class="glow-line-pink"></div>
+  <div class="pvm-inner">
+    <div class="animate-in">
+      <div class="section-label pvm-label" style="color: var(--pink);">
+        <span style="background: var(--pink); display: block; width: 28px; height: 1px;"></span>
+        TrackBox × Pole Vault Miami
+      </div>
+      <h2 class="pvm-headline">
+        POLE<br>
+        VAULT<br>
+        <span class="pink">MIAMI</span>
+      </h2>
+      <p class="pvm-body">
+        Pole Vault Miami is an elite athlete development organization integrated directly into the TrackBox ecosystem. Coaching systems, camps, clinics, and exclusive athlete access — where preparation meets elite development.
+      </p>
+      <div class="pvm-services">
+        <div class="pvm-service">
+          <div class="pvm-service-title">Elite Coaching</div>
+          <div class="pvm-service-desc">Structured sessions for all levels — beginner to competitive</div>
+        </div>
+        <div class="pvm-service">
+          <div class="pvm-service-title">Camps & Clinics</div>
+          <div class="pvm-service-desc">Intensive development programs with Toriana Thomas &amp; more</div>
+        </div>
+        <div class="pvm-service">
+          <div class="pvm-service-title">Pole Rental</div>
+          <div class="pvm-service-desc">Access to premium equipment for developing athletes</div>
+        </div>
+        <div class="pvm-service">
+          <div class="pvm-service-title">TrackBox Integration</div>
+          <div class="pvm-service-desc">Athletes get session-specific boxes aligned to training phases</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <a href="https://www.trackboxtm.com/category/toriana-thomas-clinic-tickets" target="_blank" class="btn-primary" style="background: var(--pink); clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);">Toriana Thomas Clinic</a>
+        <a href="https://www.trackboxtm.com" target="_blank" class="btn-ghost">Learn More</a>
+      </div>
+    </div>
+    <div class="pvm-right animate-in">
+      <div class="pvm-visual">
+        <div class="pvm-visual-headline">PVM</div>
+        <div class="pvm-visual-sub">Pole Vault Miami</div>
+        <div style="width: 60px; height: 1px; background: var(--pink); margin: 0 auto 24px;"></div>
+        <p style="font-size: 13px; color: var(--g1); line-height: 1.7; margin-bottom: 0;">
+          An elite development ecosystem where coaching, equipment access, performance nutrition, and community converge. TrackBox is the official preparation partner.
+        </p>
+        <div class="pvm-stat-row">
+          <div class="pvm-stat">
+            <div class="pvm-stat-num">9<span>'</span>6</div>
+            <div class="pvm-stat-label">Beginner Entry Height</div>
+          </div>
+          <div style="width: 1px; background: var(--g2);"></div>
+          <div class="pvm-stat">
+            <div class="pvm-stat-num">FL<span>→</span></div>
+            <div class="pvm-stat-label">Miami Based</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-rule"></div>
+
+<!-- ===== TEAM SALES ===== -->
+<section id="team-sales" class="section">
+  <div class="team-inner">
+    <div class="animate-in">
+      <div class="section-label">Team Sales</div>
+      <h2 class="section-title">BUILT FOR<br>PROGRAMS.</h2>
+      <p class="section-sub">Coaches. Athletic directors. Club managers. TrackBox scales to serve entire teams with bulk orders, custom builds, and dedicated session pack programs.</p>
+    </div>
+    <div class="team-grid animate-in">
+      <div class="team-card">
+        <div class="team-card-num">SCH</div>
+        <div class="team-card-title">High School Programs</div>
+        <p class="team-card-desc">Bulk ordering for full rosters. Every athlete gets their event-specific box. Program pricing available for schools and booster clubs.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-card-num">CLB</div>
+        <div class="team-card-title">Club Teams</div>
+        <p class="team-card-desc">Custom-built boxes for club and travel teams. Aligned to your coaching philosophy and training block schedule.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-card-num">ELT</div>
+        <div class="team-card-title">Elite Programs</div>
+        <p class="team-card-desc">Full performance ecosystem integration. Session Packs aligned to peaking cycles, camps, and championship schedules.</p>
+      </div>
+    </div>
+    <div style="margin-top: 32px; text-align: center;" class="animate-in">
+      <a href="mailto:TrackBoxTTM@gmail.com" class="btn-ghost" style="display: inline-block;">Contact For Team Pricing →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section id="final-cta">
+  <div class="cta-eyebrow">The Future Of Athlete Preparation</div>
+  <h2 class="cta-headline">PREPARED ATHLETES</h2>
+  <div class="cta-sub">PERFORM DIFFERENTLY.</div>
+  <div class="cta-buttons">
+    <a href="https://www.trackboxtm.com/category/trackbox-membership-boxes" target="_blank" class="btn-cta-primary">Build Your TrackBox</a>
+    <a href="mailto:TrackBoxTTM@gmail.com" class="btn-cta-pink">Become A Partner</a>
+    <a href="https://www.trackboxtm.com/category/trackbox-branded-merch" target="_blank" class="btn-cta-ghost">Shop Merch</a>
+  </div>
+  <p class="cta-tagline">© 2026 TrackBox™ — <span>Miami, FL — TrackBoxTTM@gmail.com</span></p>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-name">TRACKBOX<span style="color: var(--blue); font-size: 14px; vertical-align: super; margin-left: 2px;">TM</span></div>
+      <div class="footer-brand-tagline">Prepared Athletes Perform Differently.</div>
+      <div class="footer-brand-email">TrackBoxTTM@gmail.com</div>
+    </div>
+    <div>
+      <div class="footer-col-title">Shop</div>
+      <ul class="footer-links">
+        <li><a href="https://www.trackboxtm.com/product-page/ceramic-flower-vase" target="_blank">Essentials Box</a></li>
+        <li><a href="https://www.trackboxtm.com/product-page/silver-box" target="_blank">Performance + Recovery</a></li>
+        <li><a href="https://www.trackboxtm.com/product-page/gold-box-sub" target="_blank">Premium TrackBox</a></li>
+        <li><a href="https://www.trackboxtm.com/category/trackbox-branded-merch" target="_blank">TrackBox Merch</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Platform</div>
+      <ul class="footer-links">
+        <li><a href="#session-packs">Session Packs</a></li>
+        <li><a href="#pvm">Pole Vault Miami</a></li>
+        <li><a href="#team-sales">Team Sales</a></li>
+        <li><a href="https://track-box-view.base44.app" target="_blank">What's Inside</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Company</div>
+      <ul class="footer-links">
+        <li><a href="https://www.trackboxtm.com/about-1" target="_blank">About</a></li>
+        <li><a href="https://www.trackboxtm.com/blank-2" target="_blank">Terms & Conditions</a></li>
+        <li><a href="https://www.trackboxtm.com/blank-3" target="_blank">Refund Policy</a></li>
+        <li><a href="https://www.trackboxtm.com/blank-4" target="_blank">Shipping Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 TRACKBOX™. ALL RIGHTS RESERVED.</div>
+    <div class="footer-legal">
+      <a href="https://www.trackboxtm.com/blank" target="_blank">Privacy</a>
+      <a href="https://www.trackboxtm.com/blank-1" target="_blank">Accessibility</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ============================================================
+// THREE.JS + GSAP CINEMATIC HERO
+// ============================================================
+
+gsap.registerPlugin(ScrollTrigger);
+
+// -- Renderer --
+const canvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.5;
+
+// -- Scene --
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000000, 0.018);
+
+// -- Camera --
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(0, 1.2, 9);
+camera.lookAt(0, 0, 0);
+
+// -- Lights --
+const ambientLight = new THREE.AmbientLight(0x111122, 0);
+scene.add(ambientLight);
+
+const blueSpot = new THREE.SpotLight(0x00D4FF, 0, 20, Math.PI/3.5, 0.4, 1.5);
+blueSpot.position.set(-5, 6, 3);
+blueSpot.castShadow = true;
+blueSpot.shadow.mapSize.width = 1024;
+blueSpot.shadow.mapSize.height = 1024;
+scene.add(blueSpot);
+scene.add(blueSpot.target);
+
+const pinkSpot = new THREE.SpotLight(0xFF006E, 0, 20, Math.PI/4, 0.4, 1.5);
+pinkSpot.position.set(5, 4, -3);
+pinkSpot.castShadow = true;
+scene.add(pinkSpot);
+scene.add(pinkSpot.target);
+
+const keyLight = new THREE.DirectionalLight(0xffffff, 0);
+keyLight.position.set(2, 8, 4);
+keyLight.castShadow = true;
+scene.add(keyLight);
+
+const rimLight = new THREE.DirectionalLight(0x4488ff, 0);
+rimLight.position.set(-3, 2, -6);
+scene.add(rimLight);
+
+// -- Materials --
+const matteBlack = new THREE.MeshStandardMaterial({
+  color: 0x0c0c10,
+  roughness: 0.88,
+  metalness: 0.12,
+});
+
+const matteDark = new THREE.MeshStandardMaterial({
+  color: 0x111116,
+  roughness: 0.85,
+  metalness: 0.1,
+});
+
+// Create logo texture for front face
+function makeLogoTex() {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#0c0c10';
+  ctx.fillRect(0,0,512,256);
+  // Top strip
+  ctx.fillStyle = '#00D4FF';
+  ctx.fillRect(40, 40, 432, 2);
+  ctx.fillRect(40, 214, 432, 2);
+  // Brand name
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 64px Arial Black, Arial';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '6px';
+  ctx.fillText('TRACKBOX', 256, 148);
+  // TM
+  ctx.fillStyle = '#00D4FF';
+  ctx.font = 'bold 18px Arial';
+  ctx.fillText('TM', 460, 88);
+  // Tagline
+  ctx.fillStyle = '#444460';
+  ctx.font = '13px Arial';
+  ctx.fillText('PREPARED ATHLETES PERFORM DIFFERENTLY', 256, 198);
+  return new THREE.CanvasTexture(c);
+}
+
+const frontMat = new THREE.MeshStandardMaterial({
+  map: makeLogoTex(),
+  roughness: 0.85,
+  metalness: 0.08,
+});
+
+// -- Box Body --
+const bodyMaterials = [
+  matteBlack, matteBlack,
+  matteDark, matteBlack,
+  frontMat, matteBlack
+];
+const boxBody = new THREE.Mesh(
+  new THREE.BoxGeometry(2.2, 1.5, 2.2),
+  bodyMaterials
+);
+boxBody.position.y = -0.75;
+boxBody.receiveShadow = true;
+boxBody.castShadow = true;
+
+// -- Box edges (neon blue glow lines) --
+const edgeMat = new THREE.LineBasicMaterial({
+  color: 0x00D4FF,
+  transparent: true,
+  opacity: 0.0,
+  linewidth: 1,
+});
+const bodyEdgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(2.22, 1.52, 2.22));
+const bodyEdges = new THREE.LineSegments(bodyEdgeGeo, edgeMat);
+bodyEdges.position.y = -0.75;
+
+// -- Lid --
+const lidPivot = new THREE.Group();
+lidPivot.position.set(0, 0.02, -1.11);
+
+const lidMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(2.25, 0.22, 2.25),
+  matteBlack
+);
+lidMesh.position.set(0, 0.11, 1.125);
+lidMesh.castShadow = true;
+
+const lidEdgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(2.27, 0.24, 2.27));
+const lidEdgeMat = edgeMat.clone();
+const lidEdges = new THREE.LineSegments(lidEdgeGeo, lidEdgeMat);
+lidEdges.position.copy(lidMesh.position);
+
+lidPivot.add(lidMesh, lidEdges);
+
+// -- Assemble box --
+const trackBox = new THREE.Group();
+trackBox.add(boxBody, bodyEdges, lidPivot);
+scene.add(trackBox);
+
+// -- Ground shadow plane --
+const groundGeo = new THREE.PlaneGeometry(20, 20);
+const groundMat = new THREE.ShadowMaterial({ opacity: 0.5 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -1.6;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// -- Product orbs --
+const productDefs = [
+  { color: 0x00AAFF, emissive: 0x001844, geo: 'sphere', r: 1.6, h: 0.3, speed: 0.28 },
+  { color: 0xffffff, emissive: 0x111122, geo: 'cylinder', r: 2.0, h: 0.5, speed: 0.22 },
+  { color: 0xFF6B35, emissive: 0x441500, geo: 'box', r: 1.7, h: -0.2, speed: 0.35 },
+  { color: 0xFF006E, emissive: 0x440011, geo: 'sphere', r: 2.1, h: 0.6, speed: 0.25 },
+  { color: 0x22FF88, emissive: 0x003322, geo: 'torus', r: 1.9, h: -0.4, speed: 0.30 },
+  { color: 0xFFD700, emissive: 0x332200, geo: 'cylinder', r: 1.5, h: 0.1, speed: 0.32 },
+];
+
+const products = productDefs.map((p, i) => {
+  const mat = new THREE.MeshStandardMaterial({
+    color: p.color,
+    emissive: p.emissive,
+    roughness: 0.25,
+    metalness: 0.6,
+  });
+  let geo;
+  switch(p.geo) {
+    case 'sphere': geo = new THREE.SphereGeometry(0.14, 16, 16); break;
+    case 'cylinder': geo = new THREE.CylinderGeometry(0.07, 0.07, 0.28, 12); break;
+    case 'box': geo = new THREE.BoxGeometry(0.22, 0.10, 0.14); break;
+    case 'torus': geo = new THREE.TorusGeometry(0.10, 0.035, 8, 16); break;
+    default: geo = new THREE.SphereGeometry(0.14, 16, 16);
+  }
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(0, -0.2, 0);
+  mesh.visible = false;
+  mesh.castShadow = true;
+  scene.add(mesh);
+
+  const angle = (i / productDefs.length) * Math.PI * 2;
+  return { mesh, angle, r: p.r, h: p.h, speed: p.speed, emerged: 0 };
+});
+
+// -- Particle field --
+const PCount = 1200;
+const pPos = new Float32Array(PCount * 3);
+for (let i = 0; i < PCount; i++) {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2*Math.random()-1);
+  const radius = 4 + Math.random() * 10;
+  pPos[i*3]   = radius * Math.sin(phi) * Math.cos(theta);
+  pPos[i*3+1] = radius * Math.sin(phi) * Math.sin(theta);
+  pPos[i*3+2] = radius * Math.cos(phi);
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+const pMat = new THREE.PointsMaterial({ color: 0x00D4FF, size: 0.022, transparent: true, opacity: 0 });
+const particles = new THREE.Points(pGeo, pMat);
+scene.add(particles);
+
+// Pink particles
+const pPos2 = new Float32Array(400 * 3);
+for (let i = 0; i < 400; i++) {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2*Math.random()-1);
+  const radius = 3 + Math.random() * 8;
+  pPos2[i*3]   = radius * Math.sin(phi) * Math.cos(theta);
+  pPos2[i*3+1] = radius * Math.sin(phi) * Math.sin(theta);
+  pPos2[i*3+2] = radius * Math.cos(phi);
+}
+const pGeo2 = new THREE.BufferGeometry();
+pGeo2.setAttribute('position', new THREE.BufferAttribute(pPos2, 3));
+const pMat2 = new THREE.PointsMaterial({ color: 0xFF006E, size: 0.018, transparent: true, opacity: 0 });
+const particles2 = new THREE.Points(pGeo2, pMat2);
+scene.add(particles2);
+
+// ============================================================
+// SCENE STATE
+// ============================================================
+
+let orbitActive = false;
+const clock = new THREE.Clock();
+let progress = 0;
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+function map(v, a, b, c, d) { return c + (d-c) * clamp01((v-a)/(b-a)); }
+
+function updateScene(p) {
+  progress = p;
+
+  // --- Camera ---
+  camera.position.z = lerp(10, 3.5, clamp01(p / 0.7));
+  camera.position.y = lerp(1.5, 0.8, clamp01(p / 0.7));
+  camera.position.x = Math.sin(p * 1.2) * 0.3;
+
+  // --- Lights ---
+  ambientLight.intensity = map(p, 0, 0.15, 0, 2.5);
+  blueSpot.intensity = map(p, 0.08, 0.25, 0, 10);
+  pinkSpot.intensity = map(p, 0.12, 0.3, 0, 6);
+  keyLight.intensity = map(p, 0.1, 0.3, 0, 1.5);
+  rimLight.intensity = map(p, 0.2, 0.5, 0, 0.8);
+
+  // Edge glow
+  const edgeA = map(p, 0.15, 0.35, 0, 0.5);
+  edgeMat.opacity = edgeA;
+  lidEdgeMat.opacity = edgeA;
+
+  // --- Box rotation ---
+  if (p < 0.5) {
+    trackBox.rotation.y = map(p, 0, 0.5, 0, Math.PI * 0.4);
+  }
+
+  // --- Particles ---
+  pMat.opacity = map(p, 0.06, 0.25, 0, 0.55);
+  pMat2.opacity = map(p, 0.1, 0.3, 0, 0.25);
+
+  // --- Lid open ---
+  if (p > 0.28) {
+    lidPivot.rotation.x = -map(p, 0.28, 0.52, 0, Math.PI * 0.82);
+  }
+
+  // --- Products emerge ---
+  if (p > 0.48) {
+    products.forEach((pd, i) => {
+      const delay = i * 0.03;
+      const ep = clamp01(map(p, 0.48 + delay, 0.66 + delay, 0, 1));
+      if (ep > 0) {
+        pd.mesh.visible = true;
+        pd.emerged = ep;
+        const tx = Math.cos(pd.angle) * pd.r;
+        const tz = Math.sin(pd.angle) * pd.r;
+        const ty = pd.h;
+        pd.mesh.position.x = lerp(0, tx, ep);
+        pd.mesh.position.y = lerp(-0.2, ty, ep);
+        pd.mesh.position.z = lerp(0, tz, ep);
+      }
+    });
+    orbitActive = p > 0.66;
+  }
+
+  // --- Hero text ---
+  const hContent = document.getElementById('hero-content');
+  if (hContent) {
+    const textIn = map(p, 0.62, 0.72, 0, 1);
+    const textOut = map(p, 0.94, 1.0, 1, 0);
+    hContent.style.opacity = Math.min(textIn, textOut);
+  }
+
+  const wordIds = ['word-fuel','word-hydrate','word-recover','word-compete'];
+  wordIds.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const wp = clamp01(map(p, 0.63 + i*0.04, 0.68 + i*0.04, 0, 1));
+    el.style.opacity = wp;
+    el.style.transform = `translateY(${(1-wp)*22}px)`;
+  });
+
+  const taglineEl = document.getElementById('hero-tagline');
+  if (taglineEl) {
+    taglineEl.style.opacity = map(p, 0.80, 0.87, 0, 1);
+  }
+  const ctaEl = document.getElementById('hero-cta');
+  if (ctaEl) {
+    const ca = map(p, 0.85, 0.91, 0, 1);
+    ctaEl.style.opacity = ca;
+    ctaEl.style.pointerEvents = ca > 0.5 ? 'auto' : 'none';
+  }
+
+  // Scroll hint
+  const sh = document.getElementById('scroll-hint');
+  if (sh) sh.style.opacity = map(p, 0.0, 0.08, 1, 0);
+
+  // Canvas wrapper fade out
+  const cw = document.getElementById('canvas-wrapper');
+  if (cw) {
+    const fade = map(p, 0.96, 1.0, 1, 0);
+    cw.style.opacity = fade;
+  }
+}
+
+// ============================================================
+// RENDER LOOP
+// ============================================================
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  // Hover float
+  trackBox.position.y = Math.sin(t * 0.7) * 0.06;
+
+  // Particle slow rotation
+  particles.rotation.y += 0.0003;
+  particles2.rotation.y -= 0.0004;
+
+  // Orbit products
+  if (orbitActive) {
+    products.forEach(pd => {
+      if (!pd.mesh.visible || pd.emerged < 0.9) return;
+      pd.angle += pd.speed * 0.008;
+      pd.mesh.position.x = Math.cos(pd.angle) * pd.r;
+      pd.mesh.position.z = Math.sin(pd.angle) * pd.r;
+      pd.mesh.position.y = pd.h + Math.sin(t * 0.9 + pd.angle * 2) * 0.09;
+      pd.mesh.rotation.y += 0.015;
+      pd.mesh.rotation.x += 0.008;
+    });
+  }
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// ============================================================
+// SCROLL TRIGGER
+// ============================================================
+
+ScrollTrigger.create({
+  trigger: '#hero-spacer',
+  start: 'top top',
+  end: 'bottom bottom',
+  scrub: 1.2,
+  onUpdate: (self) => updateScene(self.progress),
+});
+
+// ============================================================
+// SECTION ANIMATIONS
+// ============================================================
+
+document.querySelectorAll('.animate-in').forEach(el => {
+  gsap.fromTo(el,
+    { opacity: 0, y: 50 },
+    {
+      opacity: 1, y: 0, duration: 0.9, ease: 'power2.out',
+      scrollTrigger: {
+        trigger: el,
+        start: 'top 82%',
+        toggleActions: 'play none none none',
+      }
+    }
+  );
+});
+
+// ============================================================
+// NAV SCROLL
+// ============================================================
+
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('nav');
+  if (window.scrollY > 60) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+});
+
+// ============================================================
+// SESSION PACK TABS
+// ============================================================
+
+document.querySelectorAll('.sp-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sp-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.sp-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = document.getElementById('pack-' + btn.dataset.pack);
+    if (panel) panel.classList.add('active');
+  });
+});
+
+// ============================================================
+// SQUAD CHIPS
+// ============================================================
+
+document.querySelectorAll('.squad-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.squad-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+
+// ============================================================
+// MARQUEE BUILD
+// ============================================================
+
+const marqueeText = ['FUEL', 'HYDRATE', 'RECOVER', 'COMPETE', 'PREPARED', 'SESSION PACKS', 'POLE VAULT MIAMI', 'ESSENTIALS', 'PERFORMANCE', 'PREMIUM'];
+const track = document.getElementById('marquee-track');
+let html = '';
+for (let rep = 0; rep < 3; rep++) {
+  marqueeText.forEach(t => {
+    html += `<span class="marquee-item"><span>•</span>${t}</span>`;
+  });
+}
+track.innerHTML = html + html;
+
+// ============================================================
+// WINDOW RESIZE
+// ============================================================
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+</script>
+</body>
+</html>
