@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrackBox — Prepared Athletes Perform Differently</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* 9:16 vertical ad container */
+    #ad {
+      position: relative;
+      width:  min(100vw, calc(100vh * 9 / 16));
+      height: min(100vh, calc(100vw * 16 / 9));
+      max-width:  450px;
+      max-height: 800px;
+      overflow: hidden;
+      background: #000;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Full-coverage utility */
+    .layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .scene-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    /* ── Scene backgrounds ── */
+    #s1, #s2, #s6 { opacity: 0; }
+
+    /* ── Three.js canvas ── */
+    #three-canvas {
+      position: absolute;
+      inset: 0;
+      width:  100% !important;
+      height: 100% !important;
+      opacity: 0;
+    }
+
+    /* ── Chalk particle canvas ── */
+    #particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* ── Shockwave ring ── */
+    #shockwave {
+      position: absolute;
+      left: 50%;
+      top: 62%;
+      width:  10px;
+      height: 10px;
+      margin-left: -5px;
+      margin-top:  -5px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.7);
+      transform: scale(0);
+      opacity: 0;
+      z-index: 55;
+      pointer-events: none;
+    }
+
+    /* ── Vignette ── */
+    .vignette {
+      background: radial-gradient(ellipse 80% 80% at 50% 50%,
+                  transparent 25%, rgba(0,0,0,0.9) 100%);
+      pointer-events: none;
+      z-index: 60;
+    }
+
+    /* ── Cinematic letterbox bars ── */
+    .lb-top, .lb-bottom {
+      position: absolute;
+      left: 0; right: 0;
+      height: 7%;
+      background: #000;
+      z-index: 82;
+    }
+    .lb-top    { top: 0; }
+    .lb-bottom { bottom: 0; }
+
+    /* ── Typography ── */
+    .t-layer {
+      pointer-events: none;
+      z-index: 70;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+    }
+
+    .headline {
+      font-family: 'Bebas Neue', 'Arial Black', sans-serif;
+      font-size: clamp(30px, 8.8vw, 52px);
+      letter-spacing: 5px;
+      color: #fff;
+      text-align: center;
+      line-height: 1.05;
+      text-shadow: 0 0 40px rgba(255,255,255,0.12), 0 2px 6px rgba(0,0,0,0.6);
+    }
+
+    .label-pill {
+      font-family: 'Bebas Neue', 'Arial Black', sans-serif;
+      font-size: clamp(16px, 4.5vw, 26px);
+      letter-spacing: 9px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.35);
+      padding-bottom: 3px;
+      text-shadow: 0 0 20px rgba(255,255,255,0.25);
+    }
+
+    /* ── Scene 6 final card ── */
+    #s6-card {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 0 14%;
+      z-index: 71;
+    }
+
+    #logo-img {
+      width: 68%;
+      opacity: 0;
+      filter: drop-shadow(0 0 24px rgba(255,255,255,0.18));
+      display: block;
+    }
+
+    .tagline-row {
+      font-family: 'Bebas Neue', 'Arial Black', sans-serif;
+      font-size: clamp(26px, 7.2vw, 44px);
+      letter-spacing: 7px;
+      color: #fff;
+      text-align: center;
+      line-height: 1.1;
+      opacity: 0;
+      text-shadow: 0 0 30px rgba(255,255,255,0.10);
+    }
+
+    #slogan-final {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: clamp(8px, 2.1vw, 11px);
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.68);
+      text-transform: uppercase;
+      text-align: center;
+      margin-top: 18px;
+      opacity: 0;
+    }
+
+    #url-final {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: clamp(7px, 1.8vw, 10px);
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.38);
+      text-align: center;
+      margin-top: 7px;
+      opacity: 0;
+    }
+
+    /* ── Progress bar ── */
+    #progress {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2px;
+      background: rgba(255,255,255,0.55);
+      z-index: 99;
+      width: 0%;
+    }
+
+    /* ── Replay button ── */
+    #replay-btn {
+      position: absolute;
+      bottom: 11%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.75);
+      padding: 9px 22px;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      transition: background 0.2s;
+    }
+    #replay-btn:hover { background: rgba(255,255,255,0.14); }
+
+    /* ── Scanline grain overlay ── */
+    #grain {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 180px 180px;
+      opacity: 0.032;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+      z-index: 83;
+      animation: grain-anim 0.08s steps(1) infinite;
+    }
+    @keyframes grain-anim {
+      0%   { background-position:   0px   0px; }
+      25%  { background-position: -50px -30px; }
+      50%  { background-position:  20px  40px; }
+      75%  { background-position: -30px  15px; }
+      100% { background-position:  10px -10px; }
+    }
+  </style>
+</head>
+<body>
+<div id="ad">
+
+  <!-- ════════════════════════════════════
+       SCENE 1 — Hero Arrival
+       ════════════════════════════════════ -->
+  <div id="s1" class="layer">
+    <img src="ChatGPT Image Apr 1, 2026, 01_56_50 PM.png" class="scene-img" alt="">
+    <!-- push-in overlay: slightly brightens center on camera approach -->
+    <div style="position:absolute;inset:0;
+         background:radial-gradient(ellipse 60% 40% at 50% 65%,
+         rgba(255,255,255,0.04) 0%, transparent 70%);"></div>
+    <div style="position:absolute;inset:0;
+         background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,transparent 45%,rgba(0,0,0,0.45) 100%);"></div>
+  </div>
+
+  <!-- S1 text block -->
+  <div id="t1" class="layer t-layer">
+    <div id="t1a" class="headline" style="opacity:0;">PREPARED ATHLETES</div>
+    <div id="t1b" class="headline" style="opacity:0;color:rgba(255,255,255,0.52);
+         margin-top:4px;">PERFORM DIFFERENTLY.</div>
+  </div>
+
+  <!-- Shockwave ring (impact fx) -->
+  <div id="shockwave"></div>
+
+  <!-- ════════════════════════════════════
+       SCENE 2 — The Reveal / Explosion
+       ════════════════════════════════════ -->
+  <div id="s2" class="layer">
+    <img src="ChatGPT Image Apr 1, 2026, 01_53_08 PM.png" class="scene-img" alt="">
+    <div style="position:absolute;inset:0;
+         background:linear-gradient(to top,rgba(0,0,0,0.65) 0%,transparent 55%,rgba(0,0,0,0.35) 100%);"></div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       SCENE 3 / 4 — Three.js Orbit
+       ════════════════════════════════════ -->
+  <canvas id="three-canvas" class="layer"></canvas>
+
+  <!-- Product labels — positioned at orbit quadrants -->
+  <div id="lbl-tape" class="layer t-layer"
+       style="justify-content:flex-start;align-items:flex-end;
+              padding: 0 10% 36% 0;">
+    <div class="label-pill">PREPARE</div>
+  </div>
+  <div id="lbl-hydrate" class="layer t-layer"
+       style="justify-content:flex-end;align-items:flex-start;
+              padding: 33% 0 0 10%;">
+    <div class="label-pill">HYDRATE</div>
+  </div>
+  <div id="lbl-fuel" class="layer t-layer"
+       style="justify-content:flex-start;align-items:flex-end;
+              padding: 0 0 18% 10%;">
+    <div class="label-pill">FUEL</div>
+  </div>
+  <div id="lbl-recover" class="layer t-layer"
+       style="justify-content:flex-end;align-items:flex-start;
+              padding: 18% 10% 0 0;">
+    <div class="label-pill">RECOVER</div>
+  </div>
+  <div id="lbl-compete" class="layer t-layer"
+       style="justify-content:center;align-items:flex-start;
+              padding-top: 10%;">
+    <div class="label-pill">COMPETE</div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       SCENE 6 — Final Hero Shot
+       ════════════════════════════════════ -->
+  <div id="s6" class="layer">
+    <img src="ChatGPT Image Apr 1, 2026, 01_52_48 PM.png" class="scene-img" alt="">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.72);"></div>
+  </div>
+
+  <div id="s6-card">
+    <img id="logo-img" src="Trackbox/Trackbox Logo Main.PNG" alt="TrackBox Logo">
+    <div style="height:20px;"></div>
+    <div id="tag-fuel"    class="tagline-row">FUEL.</div>
+    <div id="tag-hydrate" class="tagline-row">HYDRATE.</div>
+    <div id="tag-recover" class="tagline-row">RECOVER.</div>
+    <div id="tag-compete" class="tagline-row">COMPETE.</div>
+    <div id="slogan-final">Prepared Athletes Perform Differently.</div>
+    <div id="url-final">TrackBoxTM.com &nbsp;&nbsp; · &nbsp;&nbsp; @TrackBoxTM</div>
+  </div>
+
+  <!-- ════════════════════════════════════
+       ALWAYS-ON LAYERS
+       ════════════════════════════════════ -->
+  <canvas id="particles" class="layer"></canvas>
+  <div class="layer vignette"></div>
+  <div id="grain" class="layer"></div>
+  <div class="lb-top"></div>
+  <div class="lb-bottom"></div>
+
+  <div id="progress"></div>
+  <button id="replay-btn">↺ &nbsp;REPLAY</button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SCRIPTS
+     ════════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three":         "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader }   from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass }     from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+/* ══════════════════════════════════════════════
+   PARTICLE SYSTEM
+   ══════════════════════════════════════════════ */
+const ad       = document.getElementById('ad');
+const pCanvas  = document.getElementById('particles');
+const pCtx     = pCanvas.getContext('2d');
+const ptList   = [];
+
+function sizeParticles() {
+  pCanvas.width  = ad.clientWidth;
+  pCanvas.height = ad.clientHeight;
+}
+sizeParticles();
+
+function spawnChalk(cx, cy, count = 60) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.5 + Math.random() * 7;
+    const grey  = 200 + Math.floor(Math.random() * 55);
+    ptList.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 3,
+      life: 1,
+      decay: 0.016 + Math.random() * 0.026,
+      size: 1.5 + Math.random() * 4.5,
+      r: grey, g: grey, b: grey,
+    });
+  }
+}
+
+function spawnSparks(cx, cy, count = 30) {
+  for (let i = 0; i < count; i++) {
+    const angle = -Math.PI * 0.5 + (Math.random() - 0.5) * Math.PI;
+    const speed = 2 + Math.random() * 9;
+    ptList.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1,
+      life: 1,
+      decay: 0.025 + Math.random() * 0.04,
+      size: 1 + Math.random() * 2,
+      r: 255, g: 180 + Math.floor(Math.random() * 75), b: 80,
+    });
+  }
+}
+
+(function tickParticles() {
+  pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+  for (let i = ptList.length - 1; i >= 0; i--) {
+    const p = ptList[i];
+    p.x  += p.vx;
+    p.y  += p.vy;
+    p.vy += 0.18;
+    p.vx *= 0.98;
+    p.life -= p.decay;
+    if (p.life <= 0) { ptList.splice(i, 1); continue; }
+    pCtx.beginPath();
+    pCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    pCtx.fillStyle = `rgba(${p.r},${p.g},${p.b},${p.life * 0.5})`;
+    pCtx.fill();
+  }
+  requestAnimationFrame(tickParticles);
+}());
+
+/* ══════════════════════════════════════════════
+   THREE.JS SETUP
+   ══════════════════════════════════════════════ */
+const canvas3   = document.getElementById('three-canvas');
+const renderer  = new THREE.WebGLRenderer({ canvas: canvas3, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping         = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.5;
+renderer.shadowMap.enabled   = true;
+renderer.shadowMap.type      = THREE.PCFSoftShadowMap;
+
+const scene3 = new THREE.Scene();
+scene3.background = new THREE.Color(0x000408);
+scene3.fog = new THREE.FogExp2(0x000510, 0.055);
+
+const cam3 = new THREE.PerspectiveCamera(46, 9 / 16, 0.1, 100);
+cam3.position.set(0, 2.5, 9);
+cam3.lookAt(0, 0.3, 0);
+
+function resize3() {
+  const w = ad.clientWidth, h = ad.clientHeight;
+  renderer.setSize(w, h, false);
+  cam3.aspect = w / h;
+  cam3.updateProjectionMatrix();
+  sizeParticles();
+}
+resize3();
+window.addEventListener('resize', resize3);
+
+/* ── Post-processing bloom ── */
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene3, cam3));
+const bloom = new UnrealBloomPass(
+  new THREE.Vector2(ad.clientWidth, ad.clientHeight),
+  0.45,   // strength
+  0.55,   // radius
+  0.82    // threshold
+);
+composer.addPass(bloom);
+
+/* ── Lights ── */
+scene3.add(new THREE.AmbientLight(0x050515, 3));
+
+const keyL = new THREE.DirectionalLight(0xffffff, 5);
+keyL.position.set(-3, 7, 4);
+keyL.castShadow = true;
+keyL.shadow.mapSize.set(1024, 1024);
+scene3.add(keyL);
+
+const rimL = new THREE.DirectionalLight(0x2255ff, 3.5);
+rimL.position.set(6, 1, -4);
+scene3.add(rimL);
+
+const ptBlue = new THREE.PointLight(0x0044ff, 10, 20);
+ptBlue.position.set(2, 2, 3);
+scene3.add(ptBlue);
+
+const ptPink = new THREE.PointLight(0xff0055, 6, 14);
+ptPink.position.set(-3, -1, 2);
+scene3.add(ptPink);
+
+const ptBottom = new THREE.PointLight(0x001133, 8, 18);
+ptBottom.position.set(0, -4, 0);
+scene3.add(ptBottom);
+
+/* ── Stadium floor / track lanes ── */
+const floorMat = new THREE.MeshStandardMaterial({
+  color: 0x040608, roughness: 0.94, metalness: 0.06
+});
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y  = -2.9;
+floor.receiveShadow = true;
+scene3.add(floor);
+
+for (let i = -5; i <= 5; i++) {
+  const lg  = new THREE.PlaneGeometry(0.035, 35);
+  const lm  = new THREE.MeshBasicMaterial({ color: 0x181828, transparent: true, opacity: 0.7 });
+  const lme = new THREE.Mesh(lg, lm);
+  lme.rotation.x = -Math.PI / 2;
+  lme.position.set(i * 1.7, -2.89, 0);
+  scene3.add(lme);
+}
+
+/* Stadium light pillars (atmosphere) */
+for (let side of [-1, 1]) {
+  const pLight = new THREE.SpotLight(0xfff8ee, 4, 40, Math.PI / 8, 0.4);
+  pLight.position.set(side * 12, 18, -8);
+  pLight.target.position.set(0, 0, 0);
+  scene3.add(pLight);
+  scene3.add(pLight.target);
+}
+
+/* ── Fog / atmosphere particles (floating dust) ── */
+const dustGeo = new THREE.BufferGeometry();
+const dustCount = 200;
+const dustPos = new Float32Array(dustCount * 3);
+for (let i = 0; i < dustCount; i++) {
+  dustPos[i*3]   = (Math.random() - 0.5) * 20;
+  dustPos[i*3+1] = (Math.random() - 0.5) * 8;
+  dustPos[i*3+2] = (Math.random() - 0.5) * 20;
+}
+dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+const dustMat = new THREE.PointsMaterial({
+  color: 0x8899bb, size: 0.04, transparent: true, opacity: 0.35
+});
+scene3.add(new THREE.Points(dustGeo, dustMat));
+
+/* ── Center TrackBox ── */
+const texLoader  = new THREE.TextureLoader();
+const boxGroup   = new THREE.Group();
+scene3.add(boxGroup);
+
+const darkMat = new THREE.MeshStandardMaterial({
+  color: 0x0c0d0f, roughness: 0.68, metalness: 0.32
+});
+
+texLoader.load('Trackbox/2D Trackbox Model.png', tex => {
+  const frontMat = new THREE.MeshStandardMaterial({
+    map: tex, roughness: 0.52, metalness: 0.28
+  });
+  const geo  = new THREE.BoxGeometry(2.3, 1.45, 1.65);
+  const mesh = new THREE.Mesh(geo, [darkMat, darkMat, darkMat, darkMat, frontMat, darkMat]);
+  mesh.castShadow    = true;
+  mesh.receiveShadow = true;
+  boxGroup.add(mesh);
+}, undefined, () => {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.45, 1.65), darkMat);
+  mesh.castShadow = true;
+  boxGroup.add(mesh);
+});
+
+/* Logo sprite floating above the box */
+texLoader.load('Trackbox/Trackbox Logo Main.PNG', tex => {
+  const sm = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0 });
+  const s  = new THREE.Sprite(sm);
+  s.position.set(0, 2.0, 0);
+  s.scale.set(2.8, 1.4, 1);
+  boxGroup.add(s);
+  boxGroup.userData.logoSprite = s;
+});
+
+/* ── Product GLB configs ── */
+const ORBIT_R = 3.8;
+const productDefs = [
+  { file: 'Meshy_AI_Beige_Webbing_Roll_0515014943_texture.glb',
+    scale: 0.55, baseAngle: 0,                  height:  0.3, color: 0x8b7355 },
+  { file: 'Meshy_AI_LMNT_Citrus_Salt_Elec_0515010712_texture.glb',
+    scale: 0.72, baseAngle: Math.PI * 2 / 5,    height: -0.4, color: 0x1a3a6a },
+  { file: 'Meshy_AI_Luminous_Plaster_Cube_0515013018_texture.glb',
+    scale: 0.55, baseAngle: Math.PI * 4 / 5,    height:  0.5, color: 0x4a3a2a },
+  { file: 'Meshy_AI_Assorted_Snack_Pack_0516014345_texture.glb',
+    scale: 0.68, baseAngle: Math.PI * 6 / 5,    height: -0.2, color: 0x2a4a2a },
+  { file: 'Meshy_AI_Midnight_Crest_Tee_0515014533_texture.glb',
+    scale: 0.78, baseAngle: Math.PI * 8 / 5,    height:  0.4, color: 0x1a1a1a },
+];
+
+const productMeshes = [];
+let   loadedCount   = 0;
+const gltfLoader    = new GLTFLoader();
+
+productDefs.forEach((def, i) => {
+  const onLoad = model => {
+    model.scale.setScalar(def.scale);
+    model.visible = false;
+    model.userData = { ...def };
+    model.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
+    scene3.add(model);
+    productMeshes.push(model);
+    if (++loadedCount === productDefs.length) window._productsReady = true;
+  };
+  const onError = () => {
+    /* Fallback: styled icosahedron placeholder */
+    const m = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.38, 1),
+      new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.6, metalness: 0.4 })
+    );
+    m.castShadow = true;
+    m.visible    = false;
+    m.userData   = { ...def };
+    scene3.add(m);
+    productMeshes.push(m);
+    if (++loadedCount === productDefs.length) window._productsReady = true;
+  };
+  gltfLoader.load(def.file, gltf => onLoad(gltf.scene), undefined, onError);
+});
+
+/* ══════════════════════════════════════════════
+   ANIMATION STATE
+   ══════════════════════════════════════════════ */
+const camState = { angle: 0, radius: 9, height: 2.5, speed: 0.26, lookY: 0.3 };
+let orbitRunning  = false;
+let orbitAngle    = 0;
+let orbitSpeedMul = 1.0;
+const ORBIT_SPEED = 0.38;
+
+/* Trail / afterglow: render-target feedback */
+const trailRT = new THREE.WebGLRenderTarget(ad.clientWidth, ad.clientHeight);
+let   trailActive = false;
+
+const clock3 = new THREE.Clock();
+
+(function renderLoop() {
+  requestAnimationFrame(renderLoop);
+  const dt = clock3.getDelta();
+  const et = clock3.getElapsedTime();
+
+  /* Box gentle float */
+  boxGroup.position.y  = Math.sin(et * 1.1)  * 0.06;
+  boxGroup.rotation.y  = Math.sin(et * 0.42) * 0.04;
+
+  /* Camera orbit */
+  camState.angle += dt * camState.speed;
+  cam3.position.x = Math.sin(camState.angle) * camState.radius;
+  cam3.position.z = Math.cos(camState.angle) * camState.radius;
+  cam3.position.y = camState.height + Math.sin(camState.angle * 0.65) * 0.9;
+  cam3.lookAt(0, camState.lookY, 0);
+
+  /* Product orbit */
+  if (orbitRunning && productMeshes.length) {
+    orbitAngle += dt * ORBIT_SPEED * orbitSpeedMul;
+    productMeshes.forEach((pm, i) => {
+      const a  = pm.userData.baseAngle + orbitAngle;
+      pm.position.x = Math.cos(a) * ORBIT_R;
+      pm.position.z = Math.sin(a) * ORBIT_R;
+      pm.position.y = pm.userData.height + Math.sin(et * 0.9 + i * 1.3) * 0.28;
+      pm.rotation.y += dt * (0.55 + i * 0.05);
+    });
+  }
+
+  /* Pulsating accent lights */
+  ptBlue.intensity = 10 + Math.sin(et * 2.1) * 2.5;
+  ptPink.intensity =  6 + Math.sin(et * 1.7 + 1.2) * 2;
+
+  /* Render via composer (bloom) */
+  composer.render();
+}());
+
+/* ══════════════════════════════════════════════
+   ORBIT HELPERS
+   ══════════════════════════════════════════════ */
+function launchOrbit() {
+  orbitRunning  = true;
+  productMeshes.forEach((pm, i) => {
+    pm.visible = true;
+    pm.position.set(0, 0, 0);
+    const tx = Math.cos(pm.userData.baseAngle) * ORBIT_R;
+    const tz = Math.sin(pm.userData.baseAngle) * ORBIT_R;
+    gsap.to(pm.position, {
+      x: tx, y: pm.userData.height, z: tz,
+      duration: 1.4, delay: i * 0.18, ease: 'power2.out'
+    });
+  });
+  const ls = boxGroup.userData.logoSprite;
+  if (ls) gsap.to(ls.material, { opacity: 1, duration: 1.6, delay: 0.4 });
+}
+
+function collapseOrbit(onDone) {
+  orbitSpeedMul = 4;
+  const ls = boxGroup.userData.logoSprite;
+  if (ls) gsap.to(ls.material, { opacity: 0, duration: 0.5 });
+  setTimeout(() => {
+    orbitRunning = false;
+    productMeshes.forEach((pm, i) => {
+      gsap.to(pm.position, {
+        x: 0, y: 0, z: 0,
+        duration: 0.65, delay: i * 0.07,
+        ease: 'power2.in',
+        onComplete: () => { if (i === productMeshes.length - 1) { onDone && onDone(); } pm.visible = false; }
+      });
+    });
+  }, 500);
+}
+
+/* ══════════════════════════════════════════════
+   SHOCKWAVE FX
+   ══════════════════════════════════════════════ */
+function triggerShockwave() {
+  const sw = document.getElementById('shockwave');
+  gsap.fromTo(sw,
+    { scale: 0, opacity: 0.9, borderWidth: '2px' },
+    {
+      scale: 40, opacity: 0,
+      borderWidth: '0.5px',
+      duration: 1.1, ease: 'power2.out',
+      clearProps: 'all',
+      onStart: () => { sw.style.transform = 'translate(-50%,-50%) scale(0)'; },
+    }
+  );
+}
+
+/* ══════════════════════════════════════════════
+   MAIN AD TIMELINE
+   ══════════════════════════════════════════════ */
+function startAd() {
+  /* ── Reset Three.js ── */
+  orbitRunning  = false;
+  orbitSpeedMul = 1;
+  orbitAngle    = 0;
+  Object.assign(camState, { angle: 0, radius: 9, height: 2.5, speed: 0.26, lookY: 0.3 });
+  cam3.position.set(0, 2.5, 9);
+  cam3.lookAt(0, 0.3, 0);
+  bloom.strength = 0.45;
+
+  productMeshes.forEach(pm => { pm.visible = false; pm.position.set(0, 0, 0); });
+  const ls = boxGroup.userData.logoSprite;
+  if (ls) ls.material.opacity = 0;
+
+  /* ── Reset DOM ── */
+  const targets = [
+    '#s1','#s2','#s6',
+    '#t1','#t1a','#t1b',
+    '#lbl-tape','#lbl-hydrate','#lbl-fuel','#lbl-recover','#lbl-compete',
+    '#three-canvas',
+    '#logo-img','#tag-fuel','#tag-hydrate','#tag-recover','#tag-compete',
+    '#slogan-final','#url-final','#replay-btn',
+  ];
+  gsap.set(targets, { opacity: 0 });
+  gsap.set('#progress', { width: '0%' });
+  gsap.set('#three-canvas', { filter: 'brightness(1)' });
+
+  const tl = gsap.timeline();
+
+  /* ── Progress bar (full 20 s) ── */
+  tl.fromTo('#progress', { width: '0%' }, { width: '100%', duration: 20, ease: 'none' }, 0);
+
+  /* ════════════════════════════════
+     SCENE 1 — Hero Arrival  0–3 s
+     ════════════════════════════════ */
+  tl.to('#s1', { opacity: 1, duration: 0.55 }, 0.15)
+    /* Box lands → chalk + shockwave */
+    .call(() => {
+      const cx = pCanvas.width  * 0.5;
+      const cy = pCanvas.height * 0.63;
+      spawnChalk(cx, cy, 90);
+      spawnSparks(cx, cy, 35);
+      triggerShockwave();
+    }, null, 0.55)
+    /* Push-in: subtle scale on s1 */
+    .to('#s1', { scale: 1.06, duration: 2.5, ease: 'power1.out' }, 0.55)
+    /* Text entrance */
+    .to('#t1',  { opacity: 1, duration: 0.05 }, 1.0)
+    .to('#t1a', { opacity: 1, y: 0, duration: 0.65,
+                  from: { opacity: 0, y: 10 } }, 1.0)
+    .fromTo('#t1a', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.65 }, 1.0)
+    .fromTo('#t1b', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.65 }, 1.55)
+    /* Text out */
+    .to('#t1', { opacity: 0, duration: 0.45 }, 2.3)
+    /* Crossfade out */
+    .to('#s1', { opacity: 0, duration: 0.9 }, 2.55)
+
+  /* ════════════════════════════════
+     SCENE 2 — The Reveal  3–6 s
+     ════════════════════════════════ */
+    .to('#s2', { opacity: 1, duration: 0.7 }, 2.75)
+    /* Explosion burst */
+    .call(() => {
+      const cx = pCanvas.width  * 0.5;
+      const cy = pCanvas.height * 0.54;
+      spawnChalk(cx, cy, 100);
+      spawnChalk(cx - pCanvas.width * 0.2, cy - 40, 45);
+      spawnChalk(cx + pCanvas.width * 0.2, cy - 40, 45);
+      spawnSparks(cx, cy, 25);
+    }, null, 3.3)
+    /* Slight zoom on s2 for energy */
+    .to('#s2', { scale: 1.05, duration: 2.5, ease: 'power1.out' }, 3.3)
+    /* Fade out s2 */
+    .to('#s2', { opacity: 0, duration: 1.1 }, 5.1)
+
+  /* ════════════════════════════════
+     SCENE 3 — Orbit  6–12 s
+     ════════════════════════════════ */
+    .to('#three-canvas', { opacity: 1, duration: 1.0 }, 5.4)
+    .call(() => launchOrbit(), null, 5.7)
+
+    /* Label sequence (one at a time) */
+    .fromTo('#lbl-tape',    { opacity: 0, x: 12 }, { opacity: 1, x: 0, duration: 0.5 }, 7.0)
+    .to('#lbl-tape',    { opacity: 0, duration: 0.4 }, 8.1)
+    .fromTo('#lbl-hydrate', { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5 }, 8.4)
+    .to('#lbl-hydrate', { opacity: 0, duration: 0.4 }, 9.5)
+    .fromTo('#lbl-fuel',    { opacity: 0, x: 12 }, { opacity: 1, x: 0, duration: 0.5 }, 9.8)
+    .to('#lbl-fuel',    { opacity: 0, duration: 0.4 }, 10.9)
+    .fromTo('#lbl-recover', { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5 }, 11.2)
+    .to('#lbl-recover', { opacity: 0, duration: 0.4 }, 12.2)
+
+  /* ════════════════════════════════
+     SCENE 4 — Orbit Showcase  12–16 s
+     ════════════════════════════════ */
+    /* Camera sweeps in closer, orbit speeds up */
+    .to(camState, { radius: 5.2, height: 0.6, speed: 0.72, duration: 3.5, ease: 'power1.inOut' }, 12.0)
+    /* Bloom + brightness surge */
+    .to('#three-canvas', { filter: 'brightness(1.45)', duration: 1.8 }, 12.0)
+    .to(bloom, { strength: 0.95, duration: 1.8 }, 12.0)
+    .call(() => { orbitSpeedMul = 2.8; }, null, 12.2)
+    /* COMPETE label during this dynamic phase */
+    .fromTo('#lbl-compete', { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5 }, 12.5)
+    .to('#lbl-compete', { opacity: 0, duration: 0.4 }, 13.8)
+    /* Chalk micro-bursts for "slow-motion texture" feel */
+    .call(() => spawnChalk(pCanvas.width*0.5, pCanvas.height*0.5, 30), null, 13.0)
+    .call(() => spawnChalk(pCanvas.width*0.3, pCanvas.height*0.45, 25), null, 13.8)
+    .call(() => spawnChalk(pCanvas.width*0.7, pCanvas.height*0.55, 25), null, 14.5)
+    /* Bloom + brightness taper off */
+    .to('#three-canvas', { filter: 'brightness(1.0)', duration: 2.0 }, 14.0)
+    .to(bloom, { strength: 0.45, duration: 2.0 }, 14.0)
+    /* Camera pulls back for reassembly */
+    .to(camState, { radius: 8.5, height: 2.5, speed: 0.3, duration: 2.2, ease: 'power1.inOut' }, 14.5)
+
+  /* ════════════════════════════════
+     SCENE 5 — Reassembly  16–18 s
+     ════════════════════════════════ */
+    .call(() => {
+      collapseOrbit(() => {
+        /* chalk puff as lid closes */
+        spawnChalk(pCanvas.width * 0.5, pCanvas.height * 0.5, 55);
+        spawnSparks(pCanvas.width * 0.5, pCanvas.height * 0.5, 20);
+      });
+    }, null, 15.6)
+    .to('#three-canvas', { opacity: 0, duration: 1.0 }, 17.1)
+
+  /* ════════════════════════════════
+     SCENE 6 — Final Hero  18–20 s
+     ════════════════════════════════ */
+    .to('#s6', { opacity: 1, duration: 0.85 }, 17.2)
+    .fromTo('#logo-img',
+      { opacity: 0, scale: 0.94 },
+      { opacity: 1, scale: 1,    duration: 0.95, ease: 'power2.out' }, 17.55)
+    .fromTo('#tag-fuel',
+      { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.28 }, 18.15)
+    .fromTo('#tag-hydrate',
+      { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.28 }, 18.42)
+    .fromTo('#tag-recover',
+      { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.28 }, 18.69)
+    .fromTo('#tag-compete',
+      { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.28 }, 18.96)
+    .fromTo('#slogan-final',
+      { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.55 }, 19.25)
+    .fromTo('#url-final',
+      { opacity: 0 },       { opacity: 0.55,    duration: 0.45 }, 19.6)
+    .to('#replay-btn', { opacity: 1, duration: 0.5 }, 19.85);
+}
+
+window.startAd = startAd;
+document.getElementById('replay-btn').addEventListener('click', startAd);
+
+/* Auto-start on load */
+startAd();
+</script>
+</body>
+</html>
